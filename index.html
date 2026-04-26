@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Salary Slip V1.0.6</title>
+  <title>Daily Calendar V1.0.8</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
@@ -12,20 +12,25 @@
       padding: 20px;
       background: #f9f9f9;
     }
+    img {
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
-
-  <h3>📄 Salary Slip</h3>
-
+  <h2>📅 Today Calendar</h2>
+  <div id="content">⏳ Loading...</div>
+  
+  <hr style="margin:30px 0;">
+  
+  <h3>🔐 Personal Calendar</h3>
   <input type="text" id="empCode" placeholder="Staff ID"><br><br>
   <input type="password" id="password" placeholder="Password"><br><br>
-
   <button onclick="checkLogin()">Login</button>
-
   <div id="privateLink" style="margin-top:20px;"></div>
 
-  <!-- ✅ overlay FIX แล้ว -->
   <div id="loadingOverlay" style="
     display:none;
     position:fixed;
@@ -40,96 +45,73 @@
   ">
     ⏳ Loading...
   </div>
-
+  
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxsbV1Blv1AMG_aBj6qnjNciYCt6HLD18cKG226i1ZLorv2afnZVQTBTXjangP535Q6XQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyS585c2aXw3RXEOM6-IS5VNKopge6c7na97cSaMwzham7IVIjm2_YpdmFTV7MyndAL/exec";
 
-    // ✅ JSONP (เวอร์ชันเสถียรจริง)
-    function callAPI(url) {
-      return new Promise((resolve, reject) => {
+    // ✅ โหลดตารางวันนี้
+    async function loadImage() {
+      try {
+        let res = await fetch(API_URL);
+        let data = await res.json();
 
-        const callbackName = "cb_" + Date.now() + "_" + Math.floor(Math.random()*1000);
-        const script = document.createElement("script");
-
-        // ✅ callback
-        window[callbackName] = function(data) {
-          console.log("✅ CALLBACK HIT", data);
-          resolve(data);
-          delete window[callbackName];
-          script.remove();
-        };
-
-        // ❌ โหลด fail
-        script.onerror = function() {
-          console.error("❌ Script load error");
-          reject("Load error");
-          delete window[callbackName];
-          script.remove();
-        };
-
-        // 🔥 กัน cache (สำคัญมาก)
-        script.src = url 
-          + (url.includes("?") ? "&" : "?")
-          + "callback=" + callbackName
-          + "&t=" + Date.now();
-
-        document.body.appendChild(script);
-
-        // ⛔ timeout กันค้าง
-        setTimeout(() => {
-          reject("Timeout");
-          delete window[callbackName];
-          script.remove();
-        }, 8000);
-      });
+        if (data.image) {
+          document.getElementById("content").innerHTML =
+            `<p>
+              Today: ${data.date} <br><br>
+              <a href="${data.image}" target="_blank">📅 View Today Calendar</a>
+              <br><br>
+              <a href="${data.nextImage}" target="_blank">➡️ View Next day Calendar</a>
+            </p>`;
+        } else {
+          document.getElementById("content").innerHTML = "❌ No file for today";
+        }
+      } catch (err) {
+        document.getElementById("content").innerHTML = "⚠️ Fail to download";
+      }
     }
 
+    loadImage();
+
+    // ✅ login (fetch ปกติ)
     async function checkLogin() {
       const code = document.getElementById("empCode").value.trim();
       const pass = document.getElementById("password").value.trim();
-
+    
       if (!code || !pass) {
         alert("⚠️ Please input data");
         return;
       }
-
+    
       const overlay = document.getElementById("loadingOverlay");
       overlay.style.display = "flex";
-
+    
       try {
-        let url = API_URL +
-          "?mode=private&staffId=" + encodeURIComponent(code) +
-          "&pass=" + encodeURIComponent(pass);
-
-        let data = await callAPI(url);
-
+        let res = await fetch(API_URL + "?mode=private&staffId=" + encodeURIComponent(code) + "&pass=" + encodeURIComponent(pass));
+        let data = await res.json();
+    
         if (data.privateImages && data.privateImages.length > 0) {
           let html = "";
-
           data.privateImages.forEach(item => {
             html += `
-              <div style="margin-bottom:15px;">
-                📅 ${item.month}<br>
-                <a href="${item.url}" target="_blank">View Salary Slip</a>
+              <div style="margin-bottom:10px;">
+                📅 ${item.month} <br>
+                <a href="${item.url}" target="_blank">View Personal Calendar</a>
               </div>
             `;
           });
-
           document.getElementById("privateLink").innerHTML = html;
         } else {
           document.getElementById("privateLink").innerHTML =
             "❌ Incorrect StaffID or Password";
         }
-
+    
       } catch (err) {
-        console.error("🔥 ERROR:", err);
-        document.getElementById("privateLink").innerHTML =
-          "⚠️ Fail (API error / timeout)";
+        document.getElementById("privateLink").innerHTML = "⚠️ Fail";
       }
-
+    
       overlay.style.display = "none";
     }
   </script>
-
 </body>
 </html>
