@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Salary Slip V1.0.1</title>
+  <title>Daily Calendar V1.0.8</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
@@ -20,7 +20,12 @@
   </style>
 </head>
 <body>
-  <h3>📄 Salary Slip</h3>
+  <h2>📅 Today Calendar</h2>
+  <div id="content">⏳ Loading...</div>
+  
+  <hr style="margin:30px 0;">
+  
+  <h3>🔐 Personal Calendar</h3>
   <input type="text" id="empCode" placeholder="Staff ID"><br><br>
   <input type="password" id="password" placeholder="Password"><br><br>
   <button onclick="checkLogin()">Login</button>
@@ -43,6 +48,30 @@
   
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxsbV1Blv1AMG_aBj6qnjNciYCt6HLD18cKG226i1ZLorv2afnZVQTBTXjangP535Q6XQ/exec";
+
+    // ✅ โหลดตารางวันนี้
+    async function loadImage() {
+      try {
+        let res = await fetch(API_URL);
+        let data = await res.json();
+
+        if (data.image) {
+          document.getElementById("content").innerHTML =
+            `<p>
+              Today: ${data.date} <br><br>
+              <a href="${data.image}" target="_blank">📅 View Today Calendar</a>
+              <br><br>
+              <a href="${data.nextImage}" target="_blank">➡️ View Next day Calendar</a>
+            </p>`;
+        } else {
+          document.getElementById("content").innerHTML = "❌ No file for today";
+        }
+      } catch (err) {
+        document.getElementById("content").innerHTML = "⚠️ Fail to download";
+      }
+    }
+
+    loadImage();
 
     // ✅ login (fetch ปกติ)
     async function checkLogin() {
@@ -67,7 +96,7 @@
             html += `
               <div style="margin-bottom:10px;">
                 📅 ${item.month} <br>
-                <a href="${item.url}" target="_blank">View Salary Slip</a>
+                <a href="${item.url}" target="_blank">View Personal Calendar</a>
               </div>
             `;
           });
