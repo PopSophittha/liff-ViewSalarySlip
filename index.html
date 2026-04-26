@@ -39,21 +39,7 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxsbV1Blv1AMG_aBj6qnjNciYCt6HLD18cKG226i1ZLorv2afnZVQTBTXjangP535Q6XQ/exec";
 
-    // ✅ JSONP helper
-    function callAPI(url, callbackName) {
-      return new Promise((resolve) => {
-        window[callbackName] = function(data) {
-          resolve(data);
-          delete window[callbackName];
-        };
-
-        const script = document.createElement("script");
-        script.src = url + (url.includes("?") ? "&" : "?") + "callback=" + callbackName;
-        document.body.appendChild(script);
-      });
-    }
-
-    // ✅ login (แก้ตรงนี้)
+    // // ✅ login (fetch ปกติ)
     async function checkLogin() {
       const code = document.getElementById("empCode").value.trim();
       const pass = document.getElementById("password").value.trim();
@@ -67,8 +53,8 @@
       overlay.style.display = "flex";
     
       try {
-        let url = API_URL + "?mode=private&staffId=" + encodeURIComponent(code) + "&pass=" + encodeURIComponent(pass);
-        let data = await callAPI(url, "cb1"); // 🔥 เปลี่ยนตรงนี้
+        let res = await fetch(API_URL + "?mode=private&staffId=" + encodeURIComponent(code) + "&pass=" + encodeURIComponent(pass));
+        let data = await res.json();
     
         if (data.privateImages && data.privateImages.length > 0) {
           let html = "";
@@ -76,7 +62,7 @@
             html += `
               <div style="margin-bottom:10px;">
                 📅 ${item.month} <br>
-                <a href="${item.url}" target="_blank">View Salary Slip</a>
+                <a href="${item.url}" target="_blank">View Personal Calendar</a>
               </div>
             `;
           });
